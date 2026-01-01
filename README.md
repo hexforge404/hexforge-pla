@@ -1,8 +1,12 @@
 # HexForge Portable Lab Assistant (PLA)
 
-Documentation-first repo for the Portable Lab Assistant project.
+Internal-only lab tool: camera vision ("eyes") + bounded HID executor ("hands") with confirm-to-execute guardrails.
 
-Goal:
-A portable, lab-safe assistant that can observe screens (camera), interact with sandbox VMs, and coordinate tools in a controlled environment.
+## Modes
+- Observe-only
+- Suggest-only
+- Confirm-to-execute (default)
 
-Status: Planning / Architecture
+## Safety
+- Physical HID kill switch required
+- Full session logging of approved actions
