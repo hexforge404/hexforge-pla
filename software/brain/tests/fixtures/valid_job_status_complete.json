@@ -1,0 +1,13 @@
+{
+  "job_id": "pla-session-2024-01-15T10-30-45",
+  "status": "complete",
+  "service": "hexforge-pla",
+  "updated_at": "2024-01-15T10:35:00Z",
+  "progress": 1.0,
+  "message": "Session completed successfully: 5 actions executed",
+  "result": {
+    "actions_executed": 5,
+    "session_duration_seconds": 270,
+    "checksum": "a3f9b2c1e4d8"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "device_id": "pico_w_abc123",
+  "timestamp": "2026-01-01T10:30:00Z",
+  "mode": "OBSERVE",
+  "led_state": false,
+  "kill_switch_state": "ARMED",
+  "uptime_seconds": 3600,
+  "firmware_version": "v1.0.0",
+  "action_count": 0,
+  "error_state": {
+    "has_error": false,
+    "error_code": "NONE",
+    "error_count": 0
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "log_id": "log_1234567890abcdef",
+  "timestamp": "2026-01-01T10:30:45Z",
+  "event_type": "PROPOSAL",
+  "mode": "SUGGEST",
+  "operator_id": "operator_alice",
+  "proposal_id": "prop_12345678_abcd",
+  "details": {
+    "action_type": "TYPE_TEXT",
+    "payload_summary": "text: 'testuser123' (11 chars)",
+    "credential_warning": false
+  },
+  "checksum": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456"
+}

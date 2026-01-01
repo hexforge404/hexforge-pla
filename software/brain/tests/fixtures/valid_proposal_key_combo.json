@@ -1,0 +1,15 @@
+{
+  "proposal_id": "prop_87654321_dcba",
+  "timestamp": "2026-01-01T10:31:00Z",
+  "mode": "SUGGEST",
+  "action_type": "KEY_COMBO",
+  "payload": {
+    "keys": ["ctrl", "c"]
+  },
+  "rationale": "Detected terminal output that needs to be copied. Suggesting Ctrl+C to copy selected text.",
+  "credential_warning": false,
+  "safety_bounds": {
+    "max_text_length": 1024,
+    "min_action_delay_ms": 100
+  }
+}

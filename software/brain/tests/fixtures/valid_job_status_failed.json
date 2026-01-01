@@ -1,0 +1,12 @@
+{
+  "job_id": "pla-session-2024-01-15T11-00-00",
+  "status": "failed",
+  "service": "hexforge-pla",
+  "updated_at": "2024-01-15T11:02:30Z",
+  "progress": 0.6,
+  "message": "Session aborted: HID device disconnected",
+  "error": {
+    "code": "DEVICE_DISCONNECTED",
+    "detail": "Pico HID Executor lost USB connection during action execution"
+  }
+}

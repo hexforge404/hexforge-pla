@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hexforge.internal/pla/v1/session_log.schema.json",
+  "title": "Session Log Entry",
+  "description": "Audit log entry for all PLA events (Brain/HID → Log Storage)",
+  "type": "object",
+  "required": [
+    "log_id",
+    "timestamp",
+    "event_type",
+    "mode",
+    "operator_id",
+    "details",
+    "checksum"
+  ],
+  "properties": {
+    "log_id": {
+      "type": "string",
+      "description": "Unique log entry identifier (UUID recommended)",
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "minLength": 8,
+      "maxLength": 64
+    },
+    "timestamp": {
+      "type": "string",
+      "description": "ISO 8601 timestamp when event occurred",
+      "format": "date-time"
+    },
+    "event_type": {
+      "type": "string",
+      "description": "Type of event being logged",
+      "enum": [
+        "PROPOSAL",
+        "DECISION",
+        "EXECUTION",
+        "ERROR",
+        "MODE_CHANGE",
+        "SYSTEM_START",
+        "SYSTEM_STOP",
+        "KILL_SWITCH_TRIGGERED"
+      ]
+    },
+    "mode": {
+      "type": "string",
+      "description": "System mode at time of event",
+      "enum": ["OBSERVE", "SUGGEST", "EXECUTE"]
+    },
+    "operator_id": {
+      "type": "string",
+      "description": "Operator responsible for this session",
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "minLength": 2,
+      "maxLength": 64
+    },
+    "proposal_id": {
+      "type": "string",
+      "description": "Optional: Links to proposal if applicable",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "execution_id": {
+      "type": "string",
+      "description": "Optional: Links to execution if applicable",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "details": {
+      "type": "object",
+      "description": "Event-specific data (flexible)",
+      "properties": {
+        "action_type": {
+          "type": "string"
+        },
+        "payload_summary": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Truncated/sanitized payload for audit"
+        },
+        "decision": {
+          "type": "string",
+          "enum": ["APPROVED", "REJECTED"]
+        },
+        "error_message": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "old_mode": {
+          "type": "string"
+        },
+        "new_mode": {
+          "type": "string"
+        },
+        "credential_warning": {
+          "type": "boolean"
+        }
+      }
+    },
+    "checksum": {
+      "type": "string",
+      "description": "SHA256 hash of (log_id + timestamp + event_type + details) for tamper detection",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "previous_log_checksum": {
+      "type": "string",
+      "description": "Optional: Checksum of previous log entry for chain validation",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hexforge.internal/pla/v1/action_decision.schema.json",
+  "title": "Action Decision",
+  "description": "Operator's approval or rejection of proposed action (Operator → Brain)",
+  "type": "object",
+  "required": [
+    "proposal_id",
+    "decision",
+    "timestamp",
+    "operator_id"
+  ],
+  "properties": {
+    "proposal_id": {
+      "type": "string",
+      "description": "Links to original action_proposal",
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "minLength": 8,
+      "maxLength": 64
+    },
+    "decision": {
+      "type": "string",
+      "description": "Operator's decision",
+      "enum": ["APPROVED", "REJECTED"]
+    },
+    "timestamp": {
+      "type": "string",
+      "description": "ISO 8601 timestamp when decision was made",
+      "format": "date-time"
+    },
+    "operator_id": {
+      "type": "string",
+      "description": "Identifier of operator who made decision",
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "minLength": 2,
+      "maxLength": 64
+    },
+    "override_reason": {
+      "type": "string",
+      "description": "Optional: If rejected, explanation from operator",
+      "maxLength": 500
+    },
+    "credential_acknowledged": {
+      "type": "boolean",
+      "description": "If credential_warning was true, operator must acknowledge (true)"
+    }
+  },
+  "if": {
+    "properties": {
+      "decision": {
+        "const": "REJECTED"
+      }
+    }
+  },
+  "then": {
+    "required": ["override_reason"]
+  }
+}

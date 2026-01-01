@@ -1,0 +1,18 @@
+{
+  "execution_id": "exec_99887766_aabbcc",
+  "proposal_id": "prop_12345678_abcd",
+  "timestamp": "2026-01-01T10:30:51Z",
+  "mode": "EXECUTE",
+  "action_type": "TYPE_TEXT",
+  "payload": {
+    "text": "testuser123"
+  },
+  "safety_bounds": {
+    "max_text_length": 1024,
+    "min_action_delay_ms": 100
+  },
+  "operator_approval": {
+    "decision_timestamp": "2026-01-01T10:30:50Z",
+    "operator_id": "operator_alice"
+  }
+}

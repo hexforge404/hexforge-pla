@@ -1,0 +1,14 @@
+{
+  "execution_id": "exec_invalid_mode",
+  "proposal_id": "prop_12345678_abcd",
+  "timestamp": "2026-01-01T10:30:51Z",
+  "mode": "OBSERVE",
+  "action_type": "TYPE_TEXT",
+  "payload": {
+    "text": "This should fail - mode must be EXECUTE"
+  },
+  "safety_bounds": {
+    "max_text_length": 1024,
+    "min_action_delay_ms": 100
+  }
+}

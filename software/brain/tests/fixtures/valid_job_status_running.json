@@ -1,0 +1,8 @@
+{
+  "job_id": "pla-session-2024-01-15T10-30-45",
+  "status": "running",
+  "service": "hexforge-pla",
+  "updated_at": "2024-01-15T10:31:12Z",
+  "progress": 0.45,
+  "message": "Processing action 3 of 5: Typing credentials into login form"
+}

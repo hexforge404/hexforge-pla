@@ -1,0 +1,7 @@
+{
+  "proposal_id": "prop_reject_example",
+  "decision": "REJECTED",
+  "timestamp": "2026-01-01T10:33:00Z",
+  "operator_id": "operator_bob",
+  "override_reason": "Action would type into wrong field - terminal instead of login form"
+}

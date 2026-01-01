@@ -1,0 +1,38 @@
+# Python Dependencies — HexForge PLA Brain
+
+# Core dependencies
+opencv-python==4.8.1.78
+pytesseract==0.3.10
+Pillow==10.1.0
+
+# AI/LLM integration
+requests==2.31.0
+# Ollama uses REST API, no dedicated Python package needed
+
+# Serial communication with HID executor
+pyserial==3.5
+
+# Web UI
+Flask==3.0.0
+Flask-Login==0.6.3
+Flask-SocketIO==5.3.5
+
+# Configuration
+PyYAML==6.0.1
+
+# Contract validation
+jsonschema==4.20.0
+
+# Utilities
+python-dateutil==2.8.2
+cryptography==41.0.7  # For log encryption
+
+# Development/Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+black==23.12.1
+flake8==6.1.0
+mypy==1.7.1
+
+# System monitoring
+psutil==5.9.6

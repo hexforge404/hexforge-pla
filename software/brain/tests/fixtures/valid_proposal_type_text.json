@@ -1,0 +1,19 @@
+{
+  "proposal_id": "prop_12345678_abcd",
+  "timestamp": "2026-01-01T10:30:45Z",
+  "mode": "SUGGEST",
+  "action_type": "TYPE_TEXT",
+  "payload": {
+    "text": "testuser123"
+  },
+  "rationale": "Detected login form with empty username field. Suggesting to type test username based on screen context.",
+  "credential_warning": false,
+  "safety_bounds": {
+    "max_text_length": 1024,
+    "min_action_delay_ms": 100
+  },
+  "screen_context": {
+    "ocr_text": "Username: [ ]\nPassword: [ ]\n[Login Button]",
+    "detected_elements": ["username_field", "password_field", "login_button"]
+  }
+}
