@@ -1,4 +1,4 @@
-fastapi==0.110.3
-uvicorn[standard]==0.30.1
-psutil==5.9.8
+Flask==3.0.0
+gunicorn==21.2.0
 requests==2.31.0
+jsonschema==4.20.0

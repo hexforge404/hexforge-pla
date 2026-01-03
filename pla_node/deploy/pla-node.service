@@ -9,7 +9,7 @@ User=pi
 Group=pi
 WorkingDirectory=/opt/pla_node
 EnvironmentFile=/etc/pla_node/pla.env
-ExecStart=/opt/pla_node/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8787
+ExecStart=/opt/pla_node/.venv/bin/gunicorn --workers 2 --bind 0.0.0.0:8787 app.main:app
 Restart=on-failure
 RestartSec=3
 

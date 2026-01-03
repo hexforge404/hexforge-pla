@@ -27,11 +27,11 @@ Minimal steps to exercise the Option A MVP path: Pi 4B Brain Receiver on port 87
    curl http://127.0.0.1:8788/health
    ```
    Expected: `{ "ok": true, "status": "ready" }`
-4. Send a sample event from any machine on the network:
+4. Send a sample event from any machine on the network (matches contracts/event.schema.json):
    ```bash
-   curl -X POST http://<PI4_IP>:8788/event \
-     -H "Content-Type: application/json" \
-     -d '{"device_id":"esp32-hands-001","type":"button_event","button":"MENU","state":"pressed","ts_ms":12345}'
+    curl -X POST http://<PI4_IP>:8788/event \
+       -H "Content-Type: application/json" \
+       -d '{"event_version":"1.0","device_id":"esp32-hands-001","event_type":"button_press","ts":"2026-01-03T12:00:00Z","seq":1,"payload":{"button":"MENU","state":"pressed","ts_ms":12345}}'
    ```
    Expected: `{ "ok": true }`
 5. Inspect the log (one JSON object per line):
@@ -40,7 +40,7 @@ Minimal steps to exercise the Option A MVP path: Pi 4B Brain Receiver on port 87
    ```
 
 ### Systemd deployment (Pi)
-Run once to prepare the venv:
+Run once to prepare the venv (with gunicorn):
 ```bash
 cd ~/hexforge-pla/software/brain_receiver
 python3 -m venv .venv
@@ -60,13 +60,16 @@ ss -ltnp | grep -E ':(8787|8788)\b'
 curl http://127.0.0.1:8788/health
 journalctl -u brain-receiver -n 50 --no-pager
 ```
+Gunicorn should appear in the process list bound to 0.0.0.0:8788.
 
 ### Event Schema (Pi)
-- `device_id`: string, required
-- `type`: must equal `button_event`
-- `button`: one of `MENU, OK, UP, DOWN, LEFT, RIGHT, BACK, POWER`
-- `state`: `pressed` or `released`
-- `ts_ms`: integer (client-side milliseconds)
+Valid events must conform to `contracts/event.schema.json`:
+- `event_version`: string
+- `device_id`: string
+- `event_type`: string
+- `ts`: RFC3339 timestamp string
+- `seq`: integer (monotonic counter per device)
+- `payload`: object (event-type specific fields)
 
 ## 2) ESP32 Firmware
 1. Copy the config template and fill in your values:

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hexforge.local/contracts/event.schema.json",
+  "title": "PLA Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_version",
+    "device_id",
+    "event_type",
+    "ts",
+    "seq",
+    "payload"
+  ],
+  "properties": {
+    "event_version": { "type": "string", "minLength": 1 },
+    "device_id": { "type": "string", "minLength": 1 },
+    "event_type": { "type": "string", "minLength": 1 },
+    "ts": { "type": "string", "format": "date-time" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "payload": { "type": "object" }
+  }
+}

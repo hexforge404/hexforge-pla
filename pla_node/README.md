@@ -4,11 +4,8 @@ Purpose: a minimal, authenticated system-introspection node that runs on the Ras
 
 ## Endpoints (all JSON)
 - `GET /health` (no auth) — readiness probe
-- `GET /os-info` (auth) — hostname, platform, kernel, arch
-- `GET /disk` (auth) — root filesystem usage via psutil
-- `GET /usb-list` (auth) — `lsusb` + `lsblk` output (read-only)
-- `GET /ip` (auth) — local IPv4 addresses per interface
-- `GET /docker/ps` (auth, optional) — docker ps output if Docker exists, else 501
+- `POST /ingest` (auth if PLA_API_KEY set) — validate `contracts/event.schema.json`, enforce `event_version`, forward to Brain Receiver (127.0.0.1:8788/event), spool on failure, returns 202 Accepted
+- `GET /status` (auth if PLA_API_KEY set) — gateway metrics: uptime, last ingest/forward times, success/failure counts, spool depth, retry_active
 
 ## Security Model
 - Required header: `X-API-Key: <PLA_API_KEY>`
@@ -33,7 +30,7 @@ PY
 # export your key
 export PLA_API_KEY=<printed_key>
 # run manually (foreground)
-uvicorn app.main:app --host 0.0.0.0 --port 8787
+gunicorn --workers 2 --bind 0.0.0.0:8787 app.main:app
 ```
 
 ## systemd Deployment
@@ -53,12 +50,31 @@ sudo systemctl status pla-node
 ```
 Service runs from `/opt/pla_node` by default; adjust `WorkingDirectory` if you install elsewhere.
 
+Verify at runtime:
+```bash
+systemctl status pla-node --no-pager
+ss -ltnp | grep ':8787'
+curl http://127.0.0.1:8787/health
+curl -H "X-API-Key: $PLA_API_KEY" -H "Content-Type: application/json" \
+	-d @contracts/examples/button_press.json \
+	http://127.0.0.1:8787/ingest
+curl -H "X-API-Key: $PLA_API_KEY" http://127.0.0.1:8787/status
+```
+
 ## Curl Examples
 ```bash
 curl http://<PI_IP>:8787/health
-curl -H "X-API-Key: $PLA_API_KEY" http://<PI_IP>:8787/os-info
-curl -H "X-API-Key: $PLA_API_KEY" http://<PI_IP>:8787/usb-list
+curl -H "X-API-Key: $PLA_API_KEY" -H "Content-Type: application/json" \
+	-d @contracts/examples/button_press.json \
+	http://<PI_IP>:8787/ingest
+curl -H "X-API-Key: $PLA_API_KEY" http://<PI_IP>:8787/status
 ```
+
+## Failure Simulation
+- Stop Brain Receiver: `sudo systemctl stop brain-receiver`
+- Ingest an event: `curl -H "X-API-Key: $PLA_API_KEY" -H "Content-Type: application/json" -d @contracts/examples/heartbeat.json http://127.0.0.1:8787/ingest`
+- Check spool depth: `ls pla_node/spool` and `curl -H "X-API-Key: $PLA_API_KEY" http://127.0.0.1:8787/status`
+- Restart Brain Receiver: `sudo systemctl start brain-receiver` and verify spool drains automatically (spool directory empties, status forward counts increase)
 
 ## Client Example (orchestrator-side)
 A minimal stub lives in `client_example/call_node.py` showing how to call `/os-info` and `/usb-list` with `requests`.
@@ -67,5 +83,6 @@ A minimal stub lives in `client_example/call_node.py` showing how to call `/os-i
 Run `scripts/smoke_test.sh` while the server is up. It checks `/health` (unauth) and `/os-info` (auth) and fails fast on errors.
 
 ## Notes
-- Keep the API key secret; never log it. Logs capture timestamp, path, caller IP, and success/failure only.
-- Extend endpoints cautiously; do not add arbitrary command execution without new guardrails.
+- API key is optional; if set, requests must include `X-API-Key`.
+- Logs are NDJSON; ingest/forward/retry outcomes are recorded with event_id and event_type.
+- Events are validated against `contracts/event.schema.json`; if the Brain Receiver (port 8788) is down, events are spooled to `pla_node/spool/` and retried in the background.
