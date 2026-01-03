@@ -16,3 +16,7 @@ logs/*
 !logs/.gitkeep
 dist/
 build/
+
+# PLA Node local files
+pla_node/.venv/
+pla_node/config/pla.env

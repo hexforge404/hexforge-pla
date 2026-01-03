@@ -1,0 +1,17 @@
+[Unit]
+Description=HexForge PLA Node (edge tool-runner API)
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/opt/pla_node
+EnvironmentFile=/etc/pla_node/pla.env
+ExecStart=/opt/pla_node/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8787
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
