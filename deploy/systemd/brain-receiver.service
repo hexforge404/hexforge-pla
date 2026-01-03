@@ -7,7 +7,7 @@ Wants=network-online.target
 Type=simple
 User=pla
 WorkingDirectory=/home/pla/hexforge-pla/software/brain_receiver
-ExecStart=/home/pla/hexforge-pla/software/brain_receiver/run.sh
+ExecStart=/home/pla/hexforge-pla/software/brain_receiver/.venv/bin/python /home/pla/hexforge-pla/software/brain_receiver/app.py
 Restart=always
 RestartSec=2
 Environment=BRAIN_RECEIVER_PORT=8788

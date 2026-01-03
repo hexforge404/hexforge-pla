@@ -39,6 +39,28 @@ Minimal steps to exercise the Option A MVP path: Pi 4B Brain Receiver on port 87
    tail -n 5 ~/hexforge-pla/logs/events.ndjson
    ```
 
+### Systemd deployment (Pi)
+Run once to prepare the venv:
+```bash
+cd ~/hexforge-pla/software/brain_receiver
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+deactivate
+```
+Install and start the service:
+```bash
+cd ~/hexforge-pla
+sudo bash deploy/systemd/install_brain_receiver.sh
+```
+Verify ports and health (PLA Node uses 8787; Brain Receiver uses 8788 by default):
+```bash
+ss -ltnp | grep -E ':(8787|8788)\b'
+curl http://127.0.0.1:8788/health
+journalctl -u brain-receiver -n 50 --no-pager
+```
+
 ### Event Schema (Pi)
 - `device_id`: string, required
 - `type`: must equal `button_event`
