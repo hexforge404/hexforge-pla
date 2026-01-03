@@ -15,6 +15,15 @@
 5. **Test thoroughly**: Run [Test Plans](docs/08_TEST_PLANS.md) - **all safety tests must pass**
 6. **Operate safely**: Use [Runbooks](docs/09_RUNBOOKS.md) for daily operations
 
+## MVP Bring-up (Option A)
+
+- Start Brain Receiver: `cd software/brain_receiver && ./run.sh` (serves on 0.0.0.0:8787 and writes logs/events.ndjson)
+- Health check: `curl http://<PI4_IP>:8787/health` should return `{ "ok": true }`
+- Prep ESP32: `cd hardware/esp32_hands_mvp && cp config_template.h config.h` then edit Wi-Fi + BRAIN_HOST
+- Flash ESP32: Open `esp32_hands_mvp.ino` in Arduino IDE (ESP32 Dev Module), upload, watch Serial at 115200
+- Validate end-to-end: tail `logs/events.ndjson` on the Pi and confirm new entries every ~5 seconds
+- Full details: see [docs/MVP_BRINGUP.md](docs/MVP_BRINGUP.md)
+
 ---
 
 ## Operating Modes
@@ -41,6 +50,10 @@
 ---
 
 ## Documentation
+
+### Quick Start
+
+- [📦 **ChatGPT Context Pack**](docs/CHATGPT_CONTEXT_PACK.md) - **Complete repo context for AI assistants**
 
 ### Core Documents
 
