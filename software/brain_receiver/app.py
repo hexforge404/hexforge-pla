@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
 Minimal Brain Receiver service for HexForge PLA Option A MVP.
-- Listens on HTTP port 8787.
+- Listens on HTTP port 8788 by default (overridable via env BRAIN_RECEIVER_PORT).
 - Validates incoming button events against a simple schema.
 - Appends validated events to logs/events.ndjson with a UTC timestamp.
 """
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
@@ -90,7 +91,14 @@ def health_check():
 
 
 def main() -> None:
-    app.run(host="0.0.0.0", port=8787)
+    port = int(
+        os.environ.get(
+            "BRAIN_RECEIVER_PORT",
+            os.environ.get("PORT", "8788"),
+        )
+    )
+    print(f"[brain_receiver] binding 0.0.0.0:{port}", flush=True)
+    app.run(host="0.0.0.0", port=port)
 
 
 if __name__ == "__main__":

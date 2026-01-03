@@ -1,6 +1,6 @@
 # MVP Bring-up (Option A)
 
-Minimal steps to exercise the Option A MVP path: Pi 4B Brain Receiver on port 8787 + ESP32 "hands" sending button events every 5 seconds.
+Minimal steps to exercise the Option A MVP path: Pi 4B Brain Receiver on port 8788 (default, env `BRAIN_RECEIVER_PORT`) + ESP32 "hands" sending button events every 5 seconds. The PLA Node service (if running) occupies 8787.
 
 ## What You Get
 - HTTP POST /event endpoint on the Pi 4B
@@ -16,19 +16,20 @@ Minimal steps to exercise the Option A MVP path: Pi 4B Brain Receiver on port 87
 
 ## 1) Brain Receiver (Pi 4B)
 1. SSH into the Pi and clone (or pull) this repo.
-2. Start the receiver (creates `.venv`, installs deps, serves on 0.0.0.0:8787):
+2. Start the receiver (creates `.venv`, installs deps, serves on 0.0.0.0:${BRAIN_RECEIVER_PORT:-8788} by default):
    ```bash
    cd ~/hexforge-pla/software/brain_receiver
    ./run.sh
    ```
-3. Verify it responds:
+3. Verify ports and health:
    ```bash
-   curl http://<PI4_IP>:8787/health
+   ss -ltnp | grep -E ':(8787|8788)\b'
+   curl http://127.0.0.1:8788/health
    ```
    Expected: `{ "ok": true, "status": "ready" }`
 4. Send a sample event from any machine on the network:
    ```bash
-   curl -X POST http://<PI4_IP>:8787/event \
+   curl -X POST http://<PI4_IP>:8788/event \
      -H "Content-Type: application/json" \
      -d '{"device_id":"esp32-hands-001","type":"button_event","button":"MENU","state":"pressed","ts_ms":12345}'
    ```
@@ -67,7 +68,7 @@ Minimal steps to exercise the Option A MVP path: Pi 4B Brain Receiver on port 87
 ## Troubleshooting
 - **HTTP 400 schema_validation_failed**: Check `button`/`state` values and that `type` is exactly `button_event`.
 - **No log file created**: Ensure the receiver has write permission to `~/hexforge-pla/logs` and that it was started from `software/brain_receiver`.
-- **Port already in use**: Stop other services on 8787 or adjust `app.py` before running.
+- **Port already in use**: Stop conflicting services or set `BRAIN_RECEIVER_PORT` (default 8788; PLA Node uses 8787).
 - **ESP32 stuck connecting to Wi-Fi**: Verify SSID/password, 2.4 GHz availability, and that MAC filtering is disabled.
 - **No responses in Serial Monitor**: Re-check `BRAIN_HOST`, ensure Pi firewall allows 8787, and that the receiver is running.
 - **Repeated reconnects**: Weak signal; move closer to the AP or use a better antenna.
