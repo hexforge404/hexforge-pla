@@ -5,13 +5,19 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=pi
-Group=pi
-WorkingDirectory=/opt/pla_node
-EnvironmentFile=/etc/pla_node/pla.env
-ExecStart=/opt/pla_node/.venv/bin/uvicorn app.fastapi_app:app --host 0.0.0.0 --port 8787 --workers 1 --proxy-headers
+User=pla
+Group=pla
+WorkingDirectory=/home/pla/hexforge-pla/pla_node
+EnvironmentFile=/etc/pla/pla.env
+Environment=PLA_NODE_HOST=0.0.0.0
+Environment=PLA_NODE_PORT=8787
+ExecStart=/home/pla/hexforge-pla/pla_node/.venv/bin/uvicorn app.main:app --host ${PLA_NODE_HOST} --port ${PLA_NODE_PORT} --workers 1 --proxy-headers --forwarded-allow-ips=* --log-level info
 Restart=on-failure
 RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/pla/hexforge-pla/pla_node/logs /home/pla/hexforge-pla/pla_node/spool
 
 [Install]
 WantedBy=multi-user.target
