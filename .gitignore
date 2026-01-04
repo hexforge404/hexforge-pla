@@ -21,3 +21,11 @@ build/
 pla_node/.venv/
 pla_node/config/pla.env
 pla_node/spool/
+
+# Local venvs
+.venv-pla-node-test/
+.venv*/
+
+# Scratch hardware bringup (keep local)
+hardware/
+*.ino
