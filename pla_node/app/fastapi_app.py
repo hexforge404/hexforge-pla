@@ -60,6 +60,7 @@ metrics: Dict[str, Any] = {
 
 spool_lock = threading.Lock()
 metrics_lock = threading.Lock()
+retry_thread: Optional[threading.Thread] = None
 
 LOG_PATH = REPO_ROOT / "logs" / "events.ndjson"
 LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -72,7 +73,11 @@ logger.propagate = False
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    global retry_thread
     log_json("pla_node_start", version=APP_VERSION, port=PORT)
+    if retry_thread is None or not retry_thread.is_alive():
+        retry_thread = threading.Thread(target=_process_spool_loop, daemon=True)
+        retry_thread.start()
     yield
 
 
@@ -287,6 +292,7 @@ async def status():
     uptime_seconds = int(time.monotonic() - start_monotonic)
     with metrics_lock:
         snapshot = metrics.copy()
+    retry_alive = retry_thread.is_alive() if retry_thread else False
     snapshot.update(
         {
             "service": "pla_node",
@@ -294,7 +300,7 @@ async def status():
             "ok": True,
             "uptime_seconds": uptime_seconds,
             "spool_queue_depth": _spool_queue_depth(),
-            "retry_active": retry_thread.is_alive(),
+            "retry_active": retry_alive,
         }
     )
     return snapshot
@@ -358,5 +364,4 @@ async def docker_ps():
     return _docker_ps()
 
 
-retry_thread = threading.Thread(target=_process_spool_loop, daemon=True)
-retry_thread.start()
+# retry thread started in lifespan

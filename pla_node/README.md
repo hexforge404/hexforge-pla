@@ -1,6 +1,6 @@
 # PLA Node (Edge Tool-Runner)
 
-Purpose: a minimal, authenticated system-introspection node that runs on the Raspberry Pi. The main Lab Assistant/orchestrator lives elsewhere and calls this node; this module is intentionally small and read-only (no arbitrary shell execution).
+Purpose: a minimal, authenticated system-introspection node that runs on the Raspberry Pi. The main Lab Assistant/orchestrator lives elsewhere and calls this node; this module is intentionally small and read-only (no arbitrary shell execution). The service is implemented in FastAPI (`app.fastapi_app:app`) and served by `uvicorn`.
 
 ## Endpoints (all JSON)
 - `GET /health` (no auth) — readiness probe
@@ -30,7 +30,7 @@ PY
 # export your key
 export PLA_API_KEY=<printed_key>
 # run manually (foreground)
-gunicorn --workers 2 --bind 0.0.0.0:8787 app.main:app
+uvicorn app.fastapi_app:app --host 0.0.0.0 --port 8787
 ```
 
 ## systemd Deployment
@@ -48,7 +48,7 @@ sudo systemctl enable pla-node
 sudo systemctl start pla-node
 sudo systemctl status pla-node
 ```
-Service runs from `/opt/pla_node` by default; adjust `WorkingDirectory` if you install elsewhere.
+Service runs from `/home/pla/hexforge-pla/pla_node` by default; adjust `WorkingDirectory` if you install elsewhere.
 
 Verify at runtime:
 ```bash
@@ -58,6 +58,7 @@ curl http://127.0.0.1:8787/health
 curl -H "X-API-Key: $PLA_API_KEY" -H "Content-Type: application/json" \
 	-d @contracts/examples/button_press.json \
 	http://127.0.0.1:8787/ingest
+curl http://127.0.0.1:8787/openapi.json
 curl -H "X-API-Key: $PLA_API_KEY" http://127.0.0.1:8787/status
 ```
 
