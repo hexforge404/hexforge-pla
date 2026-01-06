@@ -6,11 +6,16 @@ Validates serial communication with Raspberry Pi Pico W HID executor,
 tests mode transitions, and verifies safety bounds enforcement.
 """
 
+import os
 import sys
 import time
 import json
 import serial
 from pathlib import Path
+
+import pytest
+
+pytestmark = pytest.mark.skip(reason="hardware HID executor test requires physical device")
 
 
 def find_hid_executor():

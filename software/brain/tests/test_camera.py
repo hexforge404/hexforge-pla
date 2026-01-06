@@ -9,6 +9,7 @@ and Tesseract OCR can extract text from the frames.
 import sys
 import cv2
 import pytesseract
+import pytest
 from pathlib import Path
 
 
@@ -21,11 +22,9 @@ def test_camera_detection():
     camera_device = "/dev/video0"
     
     if not Path(camera_device).exists():
-        print(f"❌ FAILED: Camera device not found at {camera_device}")
-        return False
-    
+        pytest.skip(f"Camera device not found at {camera_device}")
+    assert Path(camera_device).exists(), f"Camera device not found at {camera_device}"
     print(f"✅ PASSED: Camera device detected at {camera_device}")
-    return True
 
 
 def test_frame_capture():
@@ -37,8 +36,7 @@ def test_frame_capture():
     camera = cv2.VideoCapture(0)
     
     if not camera.isOpened():
-        print("❌ FAILED: Could not open camera")
-        return False
+        pytest.skip("Could not open camera; skipping capture test")
     
     # Set resolution
     camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
@@ -47,9 +45,7 @@ def test_frame_capture():
     ret, frame = camera.read()
     camera.release()
     
-    if not ret:
-        print("❌ FAILED: Could not capture frame")
-        return False
+    assert ret, "Could not capture frame"
     
     height, width, channels = frame.shape
     print(f"✅ PASSED: Captured frame {width}x{height} with {channels} channels")
@@ -59,7 +55,7 @@ def test_frame_capture():
     cv2.imwrite(test_frame_path, frame)
     print(f"   Frame saved to: {test_frame_path}")
     
-    return True
+    return
 
 
 def test_ocr():
@@ -71,9 +67,7 @@ def test_ocr():
     test_frame_path = "/tmp/hexforge_test_frame.jpg"
     
     if not Path(test_frame_path).exists():
-        print(f"❌ FAILED: Test frame not found at {test_frame_path}")
-        print("   Run test_frame_capture() first")
-        return False
+        pytest.skip(f"Test frame not found at {test_frame_path}; run capture test with camera present")
     
     # Load frame
     frame = cv2.imread(test_frame_path)
@@ -82,17 +76,13 @@ def test_ocr():
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
     # Run OCR
-    try:
-        ocr_text = pytesseract.image_to_string(gray)
-    except Exception as e:
-        print(f"❌ FAILED: OCR error: {e}")
-        return False
+    ocr_text = pytesseract.image_to_string(gray)
     
     if not ocr_text.strip():
         print("⚠️  WARNING: OCR returned empty text")
         print("   This is normal if camera is not pointed at text")
         print("   Point camera at a screen with text and re-run")
-        return True
+        return
     
     print(f"✅ PASSED: OCR extracted {len(ocr_text)} characters")
     print("\nSample OCR output (first 200 chars):")
@@ -100,7 +90,7 @@ def test_ocr():
     print(ocr_text[:200])
     print("-"*60)
     
-    return True
+    assert ocr_text is not None
 
 
 def main():

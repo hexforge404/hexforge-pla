@@ -1,252 +1,110 @@
-# Setup Guide: HID Executor (Raspberry Pi Pico W) — HexForge PLA
-
-**Goal**: Flash firmware, wire kill switch, and test bounded HID execution  
-**Estimated Time**: 1-2 hours  
-**Skill Level**: Intermediate (basic electronics soldering required)
-
----
-
-## Bill of Materials
-
-| Component | Qty | Purpose | Cost |
-|-----------|-----|---------|------|
-| Raspberry Pi Pico W | 1 | HID executor microcontroller | $6 |
-| SPST Kill Switch (toggle) | 1 | Emergency stop for HID | $8 |
-| Red LED (5mm) | 1 | "HID ARMED" indicator | $1 |
-| 220Ω Resistor | 1 | LED current limiter | $0.50 |
-| USB-C cable (for Pico W) | 1 | Power + serial communication | $5 |
-| Jumper wires / breadboard | - | Prototyping connections | $5 |
-| Enclosure (optional) | 1 | Safety housing | $10 |
-
-**Total**: ~$36
-
----
-
-## Phase 1: Firmware Setup
-
-### Install CircuitPython on Pico W
-
-1. Download CircuitPython `.uf2` file:
-   - Visit https://circuitpython.org/board/raspberry_pi_pico_w/
-   - Download latest stable release (8.x or newer)
-
-2. Enter bootloader mode:
-   - Hold **BOOTSEL** button on Pico W
-   - Connect USB cable to computer
-   - Release **BOOTSEL**
-   - Pico W mounts as `RPI-RP2` USB drive
-
-3. Flash firmware:
-   ```bash
-   # Copy .uf2 file to mounted drive
-   cp ~/Downloads/adafruit-circuitpython-raspberry_pi_pico_w-*.uf2 /media/RPI-RP2/
-   ```
-
-4. Pico W reboots and remounts as `CIRCUITPY` drive
-
-### Install Required Libraries
-
-```bash
-# Download CircuitPython library bundle
-wget https://github.com/adafruit/Adafruit_CircuitPython_Bundle/releases/latest/download/adafruit-circuitpython-bundle-8.x-mpy-*.zip
-unzip adafruit-circuitpython-bundle-*.zip
-
-# Copy HID library to Pico W
-cp -r adafruit-circuitpython-bundle-*/lib/adafruit_hid /media/CIRCUITPY/lib/
-```
-
----
-
-## Phase 2: Wiring Diagrams
-
-### Kill Switch (VBUS Interrupt)
-
-**Purpose**: Physically cuts USB power to disable HID, cannot be bypassed in software.
-
-```
-USB-C Cable (from Brain to Pico W):
-┌─────────────────┐
-│  USB-C Plug     │──┐
-│  (from Brain)   │  │
-└─────────────────┘  │
-                     │ VBUS (red wire)
-                     │
-                     ├──[SPST Kill Switch]──┐
-                     │                      │
-┌─────────────────┐  │                      │
-│  Raspberry Pi   │  │                      │
-│  Pico W         │<─┴──────────────────────┘
-│                 │
-│  GPIO 2 ────────┼──[220Ω Resistor]──[LED+]──[LED-]──GND
-│  (LED control)  │
-└─────────────────┘
-```
-
-**Assembly Steps**:
-1. Cut USB cable between Brain and Pico W (or use USB breakout board)
-2. Identify VBUS (red wire, typically +5V)
-3. Solder kill switch in series with VBUS
-4. Use heat shrink tubing to insulate connections
-5. **Test switch**: Ensure toggling switch powers Pico on/off
-
-### HID ARMED LED
-
-```
-Pico W GPIO 2 ──┬── [220Ω Resistor] ──┬── LED (Anode +)
-                │                     │
-                │                     └── LED (Cathode -)
-                │                              │
-                └─────────────── GND ──────────┘
-```
-
-**Assembly**:
-- Connect GPIO 2 to LED anode (long leg) via 220Ω resistor
-- Connect LED cathode (short leg) to GND
-- LED lights when HID mode is ARMED (mode != OBSERVE)
-
----
-
-## Phase 3: Firmware Installation
-
-Copy the main firmware to Pico W:
-
-```bash
-# From hardware/pico-hid-executor/ directory
-cp main.py /media/CIRCUITPY/main.py
-cp config.py /media/CIRCUITPY/config.py  # If using separate config
-```
-
-Firmware automatically runs on boot. Check serial output:
-
-```bash
-# Linux/Mac
-screen /dev/ttyACM0 115200
-
-# Or use Python serial monitor
-python -m serial.tools.miniterm /dev/ttyACM0 115200
-```
-
-**Expected Boot Messages**:
-```
-HID Executor v1.0 - HexForge PLA
-Mode: OBSERVE (HID DISABLED)
-Kill switch: ENABLED
-Waiting for commands from Brain...
-```
-
----
-
-## Phase 4: Safety Testing
-
-### Test 1: Kill Switch Function
-
-```bash
-# With Pico W powered on and LED lit:
-1. Toggle kill switch to OFF
-2. Verify Pico W powers down completely
-3. Verify LED turns off
-4. Toggle kill switch to ON
-5. Verify Pico W reboots
-```
-
-**Pass Criteria**: Pico W must power off immediately when switch is toggled. No partial power state allowed.
-
-### Test 2: Mode Transition LED
-
-```bash
-# Send mode change command from Brain
 echo '{"type":"set_mode","mode":"SUGGEST"}' > /dev/ttyACM0
-
-# LED should remain OFF (SUGGEST mode does not ARM HID)
-
 echo '{"type":"set_mode","mode":"EXECUTE"}' > /dev/ttyACM0
-
-# LED should turn ON (EXECUTE mode ARMS HID)
-```
-
-**Pass Criteria**: LED lights ONLY when mode is EXECUTE.
-
-### Test 3: Command Bounds Enforcement
-
-```bash
-# Send oversized command (>1024 chars)
 echo '{"type":"type_text","text":"'$(python3 -c 'print("A"*2000)')'"}' > /dev/ttyACM0
-
-# Check serial output for error:
-# "ERROR: Command rejected - text length 2000 exceeds MAX_TEXT_LENGTH 1024"
-```
-
-**Pass Criteria**: Executor rejects command and logs error. No text typed.
-
-### Test 4: Rate Limiting
-
-```bash
-# Send rapid commands (< 100ms apart)
-for i in {1..10}; do
-  echo '{"type":"type_text","text":"Test"}' > /dev/ttyACM0
-done
-
-# Check serial output - should enforce 100ms delay between actions
-```
-
-**Pass Criteria**: Commands processed with minimum 100ms spacing, even if sent faster.
-
----
-
-## Phase 5: Integration with Brain
-
-1. Connect Pico W to Brain VM via USB
-2. Verify serial device appears:
-   ```bash
-   ls -l /dev/ttyACM0
-   ```
-3. Run Brain integration test:
-   ```bash
-   cd ~/hexforge-pla/software/brain
-   source venv/bin/activate
-   python test_hid_executor.py
-   ```
-
-**Expected Output**:
-```
-HID Executor detected at /dev/ttyACM0
-Mode: OBSERVE
-Setting mode to EXECUTE...
-Mode changed: EXECUTE (LED ON)
-Sending test command: {"type":"type_text","text":"Hello"}
-Response: {"status":"ok","action":"type_text"}
-Test passed.
-```
-
----
-
-## Troubleshooting
-
-### Pico W Not Detected
-
-```bash
-# Check USB connection
-lsusb | grep "Raspberry Pi"
-
-# Check kernel messages
 dmesg | tail -20
-```
+# Setup Guide: ESP32 HID Executor — HexForge PLA
 
-### CircuitPython Not Booting
+**Goal:** Wire and flash the ESP32 HID executor with physical interlocks (kill switch, armed LED) so HID can only operate when physically enabled. The Brain (Pi/VM) never drives HID directly.
 
-- Re-flash `.uf2` file (hold BOOTSEL, reconnect USB)
-- Check for `code.py` or `main.py` syntax errors via serial console
+**Valid MCU Variants**
+- ESP32-S2 or ESP32-S3 with native USB (CDC + HID) and TinyUSB support.
+- Dev boards with USB-OTG port exposed (e.g., ESP32-S2-Saola, ESP32-S3-DevKitC-1). Avoid classic ESP32/ESP32-C3 (no native USB HID) and Pico/Pico W.
 
-### Kill Switch Not Working
-
-- Verify switch is in series with VBUS (not GND or signal wire)
-- Test switch continuity with multimeter
-- Ensure switch is rated for 5V 500mA minimum
+**Firmware Assumptions**
+- Arduino + TinyUSB **or** ESP-IDF TinyUSB class driver.
+- HID reports (keyboard + mouse) and CDC for status/commands.
+- Matches PLA contract bounds: max text 1024, min action spacing 100 ms, heartbeat device_status.
 
 ---
 
-**See also**:
-- [Architecture: HID Executor](01_ARCHITECTURE.md#hid-executor)
-- [Safety Guardrails](02_SAFETY_GUARDRAILS.md)
-- [Test Plans: HID Safety Tests](08_TEST_PLANS.md#phase-2-safety-mechanism-tests)
-- [Hardware BOM](04_HARDWARE_BOM.md)
+## Bill of Materials (per executor)
+- ESP32-S2 or ESP32-S3 dev board with native USB (USB-C preferred)
+- USB host cable from Brain → ESP32 (data + power)
+- SPST kill switch rated ≥5 V / 500 mA (panel toggle or rocker)
+- Red LED ("HID ARMED") + 220 Ω resistor
+- Optional: momentary button for physical arm input (GPIO)
+- Heat-shrink, hookup wire, enclosure, and labels for safety
+
+---
+
+## Wiring Overview (Safety-First)
+- **Kill switch in series with USB VBUS** from Brain to ESP32; removes power so firmware cannot bypass.
+- **Armed LED** on ESP32 GPIO to surface armed state visibly.
+- **Optional physical arm button** to feed a GPIO that firmware AND host check before enabling EXECUTE.
+
+### Kill Switch (VBUS Cut)
+```
+Host USB (Brain) ----[ +5V (red) ]----[ SPST Kill Switch ]----> ESP32 VBUS
+Host GND  -----------------------------------------------> ESP32 GND
+D+ / D- (data) ------------------------------------------> ESP32 D+ / D-
+```
+- Cut the +5 V wire (red) in the USB cable or use a USB breakout; place switch in series.
+- Do **not** switch data lines; only VBUS. Insulate all splices.
+- Verify with multimeter: OFF = open circuit between host VBUS and ESP32 VBUS.
+
+### Armed LED (example GPIO 5)
+```
+ESP32 GPIO5 ----[220Ω]----|> (LED Anode)
+LED Cathode ----------------------- GND
+```
+- LED must be visible on the enclosure front. High = armed.
+- GPIO number is configurable; keep it in config (`arm_gpio`, default 5).
+
+### Optional Physical Arm Button (example GPIO 4)
+```
+3V3 ----[10k]----+----> GPIO4 (input, pull-up)
+                 |
+             [Momentary NO Button]
+                 |
+                GND
+```
+- Button pulls GPIO4 low when pressed/latched; firmware reads as "physical_ok".
+- If unused, leave disabled in firmware/config.
+
+---
+
+## Step-by-Step Wiring (ESP32-S2/S3)
+1. **Prepare USB lead**: cut a spare USB cable; expose red (+5 V), black (GND), green (D+), white (D-).
+2. **Insert kill switch** in series with the red wire; insulate joints.
+3. **Connect data and ground** directly: green→D+, white→D-, black→GND.
+4. **LED**: connect GPIO5 → 220 Ω → LED anode; LED cathode → GND. Label "HID ARMED".
+5. **Optional arm button**: wire GPIO4 with pull-up to 3V3 and button to GND as shown above.
+6. Mount switch and LED on enclosure; ensure clear visibility and tactile switch action.
+7. Continuity check: switch OFF = no power to ESP32; switch ON = ESP32 enumerates over USB.
+
+---
+
+## Firmware Flash (Arduino TinyUSB)
+1. Install ESP32 boards package (ESP32 3.x) in Arduino IDE.
+2. Select board: **ESP32S3 Dev Module** (or ESP32S2 equivalent). Enable TinyUSB CDC + HID.
+3. Set USB mode to "CDC and HID"; upload firmware from `esp32_firmware/`.
+4. Confirm serial at 115200 baud and HID descriptors present (check `dmesg` or `lsusb`).
+
+(ESP-IDF users: configure TinyUSB CDC+HID composite, enable VBUS sense if available.)
+
+---
+
+## Validation Checklist
+- **Power cut**: Toggle kill switch OFF → ESP32 powers down and disconnects from USB; ON → enumerates.
+- **LED**: Arms only when host sets EXECUTE; stays off in OBSERVE/SUGGEST.
+- **Physical arm**: If wired, EXECUTE is blocked unless button/pull-up reports OK.
+- **Contract bounds**: Typing >1024 chars or key combos outside allowed set must be rejected by firmware/host.
+- **Heartbeat**: device_status emitted periodically; host refuses commands if stale.
+
+---
+
+## Safety Rules (Do Not Violate)
+- Never bypass the kill switch (no always-on VBUS, no firmware-only disable).
+- LED must be visible to the operator; do not bury inside enclosure.
+- Do not power ESP32 from a separate supply during HID use; the kill switch must remove **all** HID power.
+- Do not reroute host data through relays/switches; only VBUS is switchable to avoid signal integrity loss.
+- Brain and Hands stay separate: Brain sends bounded contracts; ESP32 executes only after physical + logical arm.
+
+---
+
+## Quick Reference
+- Kill switch: in-series with USB +5 V between Brain and ESP32.
+- Armed LED: GPIO5 → 220 Ω → LED → GND (configurable `arm_gpio`).
+- Optional arm input: GPIO4 pull-up to 3V3, button to GND.
+- Valid MCUs: ESP32-S2 / ESP32-S3 with native USB; no Pico, no classic ESP32.
+- Firmware stack: TinyUSB composite (CDC + HID), respects PLA contracts and heartbeats.

@@ -41,12 +41,8 @@ def test_valid_proposal_type_text():
     data = load_fixture('valid_proposal_type_text.json')
     is_valid, error = validate_proposal(data)
     
-    if is_valid:
-        print("✅ PASSED: Proposal validated successfully")
-        return True
-    else:
-        print(f"❌ FAILED: {error}")
-        return False
+    print("✅ PASSED: Proposal validated successfully")
+    assert is_valid, error
 
 
 def test_valid_proposal_key_combo():
@@ -58,12 +54,8 @@ def test_valid_proposal_key_combo():
     data = load_fixture('valid_proposal_key_combo.json')
     is_valid, error = validate_proposal(data)
     
-    if is_valid:
-        print("✅ PASSED: Key combo proposal validated successfully")
-        return True
-    else:
-        print(f"❌ FAILED: {error}")
-        return False
+    print("✅ PASSED: Key combo proposal validated successfully")
+    assert is_valid, error
 
 
 def test_valid_proposal_with_credential_warning():
@@ -75,13 +67,9 @@ def test_valid_proposal_with_credential_warning():
     data = load_fixture('valid_proposal_with_credential_warning.json')
     is_valid, error = validate_proposal(data)
     
-    if is_valid and data['credential_warning']:
-        print("✅ PASSED: Proposal with credential warning validated")
-        print("   ⚠️  Credential warning flag: TRUE")
-        return True
-    else:
-        print(f"❌ FAILED: {error}")
-        return False
+    print("✅ PASSED: Proposal with credential warning validated")
+    print("   ⚠️  Credential warning flag: TRUE")
+    assert is_valid and data['credential_warning'], error
 
 
 def test_valid_decision_approved():
@@ -93,12 +81,8 @@ def test_valid_decision_approved():
     data = load_fixture('valid_decision_approved.json')
     is_valid, error = validate_decision(data)
     
-    if is_valid:
-        print("✅ PASSED: Approved decision validated successfully")
-        return True
-    else:
-        print(f"❌ FAILED: {error}")
-        return False
+    print("✅ PASSED: Approved decision validated successfully")
+    assert is_valid, error
 
 
 def test_valid_decision_rejected():
@@ -110,13 +94,9 @@ def test_valid_decision_rejected():
     data = load_fixture('valid_decision_rejected.json')
     is_valid, error = validate_decision(data)
     
-    if is_valid and 'override_reason' in data:
-        print("✅ PASSED: Rejected decision validated with reason")
-        print(f"   Reason: {data['override_reason']}")
-        return True
-    else:
-        print(f"❌ FAILED: {error}")
-        return False
+    print("✅ PASSED: Rejected decision validated with reason")
+    print(f"   Reason: {data['override_reason']}")
+    assert is_valid and 'override_reason' in data, error
 
 
 def test_valid_execute_type_text():
@@ -128,13 +108,9 @@ def test_valid_execute_type_text():
     data = load_fixture('valid_execute_type_text.json')
     is_valid, error = validate_execute(data)
     
-    if is_valid and data['mode'] == 'EXECUTE':
-        print("✅ PASSED: Execute command validated successfully")
-        print(f"   Mode: {data['mode']} (correct)")
-        return True
-    else:
-        print(f"❌ FAILED: {error}")
-        return False
+    print("✅ PASSED: Execute command validated successfully")
+    print(f"   Mode: {data['mode']} (correct)")
+    assert is_valid and data['mode'] == 'EXECUTE', error
 
 
 def test_invalid_execute_wrong_mode():
@@ -146,13 +122,9 @@ def test_invalid_execute_wrong_mode():
     data = load_fixture('invalid_execute_wrong_mode.json')
     is_valid, error = validate_execute(data)
     
-    if not is_valid:
-        print("✅ PASSED: Invalid mode correctly rejected")
-        print(f"   Error: {error}")
-        return True
-    else:
-        print("❌ FAILED: Should have rejected mode != EXECUTE")
-        return False
+    print("✅ PASSED: Invalid mode correctly rejected")
+    print(f"   Error: {error}")
+    assert not is_valid, "Should have rejected mode != EXECUTE"
 
 
 def test_valid_session_log():
@@ -164,14 +136,10 @@ def test_valid_session_log():
     data = load_fixture('valid_session_log_proposal.json')
     is_valid, error = validate_session_log(data)
     
-    if is_valid:
-        print("✅ PASSED: Session log entry validated successfully")
-        print(f"   Event type: {data['event_type']}")
-        print(f"   Checksum: {data['checksum'][:16]}...")
-        return True
-    else:
-        print(f"❌ FAILED: {error}")
-        return False
+    print("✅ PASSED: Session log entry validated successfully")
+    print(f"   Event type: {data['event_type']}")
+    print(f"   Checksum: {data['checksum'][:16]}...")
+    assert is_valid, error
 
 
 def test_valid_device_status():
@@ -183,16 +151,12 @@ def test_valid_device_status():
     data = load_fixture('valid_device_status.json')
     is_valid, error = validate_device_status(data)
     
-    if is_valid:
-        print("✅ PASSED: Device status validated successfully")
-        print(f"   Device: {data['device_id']}")
-        print(f"   Mode: {data['mode']}")
-        print(f"   LED: {'ON' if data['led_state'] else 'OFF'}")
-        print(f"   Kill switch: {data['kill_switch_state']}")
-        return True
-    else:
-        print(f"❌ FAILED: {error}")
-        return False
+    print("✅ PASSED: Device status validated successfully")
+    print(f"   Device: {data['device_id']}")
+    print(f"   Mode: {data['mode']}")
+    print(f"   LED: {'ON' if data['led_state'] else 'OFF'}")
+    print(f"   Kill switch: {data['kill_switch_state']}")
+    assert is_valid, error
 
 
 def test_invalid_proposal_missing_field():
@@ -207,13 +171,9 @@ def test_invalid_proposal_missing_field():
     
     is_valid, error = validate_proposal(data)
     
-    if not is_valid and 'rationale' in str(error):
-        print("✅ PASSED: Missing 'rationale' correctly rejected")
-        print(f"   Error: {error}")
-        return True
-    else:
-        print("❌ FAILED: Should have rejected missing 'rationale'")
-        return False
+    print("✅ PASSED: Missing 'rationale' correctly rejected")
+    print(f"   Error: {error}")
+    assert not is_valid and 'rationale' in str(error), "Should have rejected missing 'rationale'"
 
 
 def test_invalid_proposal_text_too_long():
@@ -228,13 +188,9 @@ def test_invalid_proposal_text_too_long():
     
     is_valid, error = validate_proposal(data)
     
-    if not is_valid:
-        print("✅ PASSED: Oversized text correctly rejected")
-        print(f"   Error: {error}")
-        return True
-    else:
-        print("❌ FAILED: Should have rejected text > 1024 chars")
-        return False
+    print("✅ PASSED: Oversized text correctly rejected")
+    print(f"   Error: {error}")
+    assert not is_valid, "Should have rejected text > 1024 chars"
 
 
 def test_valid_job_status_running():
@@ -246,12 +202,8 @@ def test_valid_job_status_running():
     data = load_fixture('valid_job_status_running.json')
     is_valid, error = validate_job_status(data)
     
-    if is_valid:
-        print("✅ PASSED: Job status (running) validated successfully")
-        return True
-    else:
-        print(f"❌ FAILED: {error}")
-        return False
+    print("✅ PASSED: Job status (running) validated successfully")
+    assert is_valid, error
 
 
 def test_valid_job_status_complete():
@@ -263,12 +215,8 @@ def test_valid_job_status_complete():
     data = load_fixture('valid_job_status_complete.json')
     is_valid, error = validate_job_status(data)
     
-    if is_valid:
-        print("✅ PASSED: Job status (complete) validated successfully")
-        return True
-    else:
-        print(f"❌ FAILED: {error}")
-        return False
+    print("✅ PASSED: Job status (complete) validated successfully")
+    assert is_valid, error
 
 
 def test_valid_job_status_failed():
@@ -280,12 +228,8 @@ def test_valid_job_status_failed():
     data = load_fixture('valid_job_status_failed.json')
     is_valid, error = validate_job_status(data)
     
-    if is_valid:
-        print("✅ PASSED: Job status (failed) validated successfully")
-        return True
-    else:
-        print(f"❌ FAILED: {error}")
-        return False
+    print("✅ PASSED: Job status (failed) validated successfully")
+    assert is_valid, error
 
 
 def test_invalid_job_status_wrong_enum():
@@ -297,13 +241,9 @@ def test_invalid_job_status_wrong_enum():
     data = load_fixture('invalid_job_status_wrong_enum.json')
     is_valid, error = validate_job_status(data)
     
-    if not is_valid:
-        print("✅ PASSED: Invalid status enum correctly rejected")
-        print(f"   Error: {error}")
-        return True
-    else:
-        print("❌ FAILED: Should have rejected invalid status enum")
-        return False
+    print("✅ PASSED: Invalid status enum correctly rejected")
+    print(f"   Error: {error}")
+    assert not is_valid, "Should have rejected invalid status enum"
 
 
 def main():
