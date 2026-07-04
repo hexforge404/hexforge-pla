@@ -1,0 +1,4 @@
+.pio/
+.venv-pio/
+*.bak_*
+src/*.bak_*
