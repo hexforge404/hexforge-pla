@@ -4,6 +4,26 @@ All notable changes to the PLA contract system.
 
 ---
 
+## [v2.0.0-proposed] - 2026-07-19
+
+### Added - HF-P0-004 Timestamp/Provenance Containment
+
+- Required `boot_id`, `sync_id`, and `status_sequence` on `device_status`.
+- Required canonical UTC RFC3339 timestamps with millisecond precision.
+- Added `device_time_sync.schema.json` for Brain-authoritative session time anchoring.
+- Added strict format-checked contract tests and legacy/incomplete status rejection.
+
+### Safety Compatibility
+
+- Preserved the exact `kill_switch_state` enum: `ARMED`, `DISABLED`, `UNKNOWN`.
+- Legacy status without complete provenance is non-authoritative and fails closed.
+- Device timestamps do not replace Brain monotonic receive-age freshness.
+- Fabricated or placeholder timestamps remain prohibited.
+
+This is a breaking contract proposal because new provenance fields are required. Brain and firmware runtime implementations are intentionally deferred to coordinated later steps.
+
+---
+
 ## [v1.0.0] - 2026-01-01
 
 ### Added - Initial Contract System

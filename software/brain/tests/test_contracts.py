@@ -7,7 +7,11 @@ Validates that all JSON fixtures pass/fail schema validation as expected.
 
 import sys
 import json
+from datetime import datetime
 from pathlib import Path
+
+import pytest
+from jsonschema import Draft7Validator, FormatChecker
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
@@ -23,6 +27,7 @@ from contract_validator import (
 
 
 FIXTURES_DIR = Path(__file__).parent / 'fixtures'
+SCHEMAS_DIR = Path(__file__).parent.parent.parent.parent / 'contracts' / 'schemas'
 
 
 def load_fixture(filename: str):
@@ -30,6 +35,28 @@ def load_fixture(filename: str):
     fixture_path = FIXTURES_DIR / filename
     with open(fixture_path, 'r') as f:
         return json.load(f)
+
+
+def load_schema(filename: str):
+    """Load a JSON contract schema."""
+    with open(SCHEMAS_DIR / filename, 'r') as f:
+        return json.load(f)
+
+
+def strict_validator(filename: str) -> Draft7Validator:
+    """Build a validator that enforces JSON Schema formats explicitly."""
+    schema = load_schema(filename)
+    Draft7Validator.check_schema(schema)
+    checker = FormatChecker()
+
+    def canonical_utc_datetime(value):
+        if not isinstance(value, str):
+            return True  # JSON Schema type validation reports non-strings.
+        datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ")
+        return True
+
+    checker.checkers["date-time"] = (canonical_utc_datetime, (ValueError,))
+    return Draft7Validator(schema, format_checker=checker)
 
 
 def test_valid_proposal_type_text():
@@ -157,6 +184,105 @@ def test_valid_device_status():
     print(f"   LED: {'ON' if data['led_state'] else 'OFF'}")
     print(f"   Kill switch: {data['kill_switch_state']}")
     assert is_valid, error
+
+
+@pytest.mark.parametrize("kill_state", ["ARMED", "DISABLED", "UNKNOWN"])
+def test_device_status_preserves_kill_switch_enum(kill_state):
+    data = load_fixture('valid_device_status.json')
+    data['kill_switch_state'] = kill_state
+    strict_validator('device_status.schema.json').validate(data)
+
+
+@pytest.mark.parametrize("missing", ["timestamp", "boot_id", "sync_id", "status_sequence"])
+def test_device_status_rejects_missing_provenance(missing):
+    data = load_fixture('valid_device_status.json')
+    del data[missing]
+    assert not strict_validator('device_status.schema.json').is_valid(data)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("timestamp", "2026-01-01T10:30:00Z"),
+        ("timestamp", "2026-01-01T10:30:00.000+00:00"),
+        ("timestamp", "2026-13-40T25:61:61.000Z"),
+        ("timestamp", "not-a-timestamp"),
+        ("timestamp", None),
+        ("boot_id", "ABCDEF0123456789ABCDEF0123456789"),
+        ("boot_id", "0123456789abcdef"),
+        ("boot_id", True),
+        ("sync_id", "xyz"),
+        ("sync_id", 1),
+        ("status_sequence", True),
+        ("status_sequence", "0"),
+        ("status_sequence", 1.5),
+        ("status_sequence", -1),
+        ("status_sequence", 9223372036854775808),
+    ],
+)
+def test_device_status_rejects_noncanonical_provenance(field, value):
+    data = load_fixture('valid_device_status.json')
+    data[field] = value
+    assert not strict_validator('device_status.schema.json').is_valid(data)
+
+
+def test_legacy_device_status_is_not_authoritative():
+    data = load_fixture('valid_device_status.json')
+    for field in ("boot_id", "sync_id", "status_sequence"):
+        del data[field]
+    assert not strict_validator('device_status.schema.json').is_valid(data)
+
+
+@pytest.mark.parametrize("kill_state", ["armed", " ARMED", "ARMED ", True, 1, None])
+def test_device_status_rejects_noncanonical_kill_state(kill_state):
+    data = load_fixture('valid_device_status.json')
+    data['kill_switch_state'] = kill_state
+    assert not strict_validator('device_status.schema.json').is_valid(data)
+
+
+def test_device_status_rejects_extra_fields():
+    data = load_fixture('valid_device_status.json')
+    data['physical_ok'] = True
+    assert not strict_validator('device_status.schema.json').is_valid(data)
+
+
+def test_valid_device_time_sync():
+    data = load_fixture('valid_device_time_sync.json')
+    strict_validator('device_time_sync.schema.json').validate(data)
+
+
+@pytest.mark.parametrize("missing", ["type", "sync_id", "utc_anchor"])
+def test_device_time_sync_rejects_missing_fields(missing):
+    data = load_fixture('valid_device_time_sync.json')
+    del data[missing]
+    assert not strict_validator('device_time_sync.schema.json').is_valid(data)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("type", "sync"),
+        ("type", True),
+        ("sync_id", "FEDCBA9876543210FEDCBA9876543210"),
+        ("sync_id", "short"),
+        ("sync_id", None),
+        ("utc_anchor", "2026-01-01T10:30:00Z"),
+        ("utc_anchor", "2026-01-01T10:30:00.000+00:00"),
+        ("utc_anchor", "2026-13-40T25:61:61.000Z"),
+        ("utc_anchor", "not-a-timestamp"),
+        ("utc_anchor", 0),
+    ],
+)
+def test_device_time_sync_rejects_noncanonical_fields(field, value):
+    data = load_fixture('valid_device_time_sync.json')
+    data[field] = value
+    assert not strict_validator('device_time_sync.schema.json').is_valid(data)
+
+
+def test_device_time_sync_rejects_extra_fields():
+    data = load_fixture('valid_device_time_sync.json')
+    data['timestamp'] = data['utc_anchor']
+    assert not strict_validator('device_time_sync.schema.json').is_valid(data)
 
 
 def test_invalid_proposal_missing_field():

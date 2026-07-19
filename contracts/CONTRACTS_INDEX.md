@@ -105,13 +105,30 @@ PLA aligns with HexForge's global contract standards for service interoperabilit
 **Purpose**: Report HID executor health and safety state  
 **Required Fields**:
 - `device_id` (string): HID executor identifier
-- `timestamp` (string, ISO 8601): Status report time
+- `timestamp` (string): Brain-anchored UTC RFC3339 status generation time (`YYYY-MM-DDTHH:MM:SS.sssZ`)
+- `boot_id` (string): Fresh 128-bit lowercase-hex identifier for each MCU boot
+- `sync_id` (string): Fresh 128-bit lowercase-hex identifier for the current Brain serial synchronization session
+- `status_sequence` (integer): Strictly increasing per-session sequence, beginning at zero
 - `mode` (enum): Current mode (OBSERVE, SUGGEST, EXECUTE)
 - `led_state` (boolean): HID ARMED LED status
 - `kill_switch_state` (enum): ARMED, DISABLED, UNKNOWN
 - `last_execution_time` (string, optional): Timestamp of last action
 - `error_state` (object, optional): Current errors or warnings
 - `uptime_seconds` (integer): Time since boot
+
+Legacy or incomplete status without timestamp, boot identity, synchronization identity, or sequence is non-authoritative and must fail closed. Device timestamp does not replace Brain monotonic receive-age freshness.
+
+### 6. Device Time Synchronization (`device_time_sync.schema.json`)
+**Direction**: Brain → HID Executor (via Serial)
+
+**Purpose**: Establish a Brain-authoritative UTC anchor for one serial synchronization session
+
+**Required Fields**:
+- `type` (constant): `time_sync`
+- `sync_id` (string): Fresh Brain-generated 128-bit lowercase-hex session identifier
+- `utc_anchor` (string): Canonical UTC RFC3339 timestamp (`YYYY-MM-DDTHH:MM:SS.sssZ`)
+
+Before valid synchronization, the executor is non-authoritative and protected execution remains blocked. Placeholder or fabricated timestamps are prohibited.
 
 ---
 

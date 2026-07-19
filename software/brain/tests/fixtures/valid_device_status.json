@@ -1,6 +1,9 @@
 {
   "device_id": "pico_w_abc123",
-  "timestamp": "2026-01-01T10:30:00Z",
+  "timestamp": "2026-01-01T10:30:00.000Z",
+  "boot_id": "0123456789abcdef0123456789abcdef",
+  "sync_id": "fedcba9876543210fedcba9876543210",
+  "status_sequence": 0,
   "mode": "OBSERVE",
   "led_state": false,
   "kill_switch_state": "ARMED",

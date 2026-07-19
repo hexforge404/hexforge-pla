@@ -1,12 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://hexforge.internal/pla/v1/device_status.schema.json",
+  "$id": "https://hexforge.internal/pla/v2/device_status.schema.json",
   "title": "Device Status",
   "description": "HID executor health and safety state report (HID Executor → Brain)",
   "type": "object",
   "required": [
     "device_id",
     "timestamp",
+    "boot_id",
+    "sync_id",
+    "status_sequence",
     "mode",
     "led_state",
     "kill_switch_state",
@@ -22,8 +25,25 @@
     },
     "timestamp": {
       "type": "string",
-      "description": "ISO 8601 timestamp when status was generated",
-      "format": "date-time"
+      "description": "Canonical UTC RFC3339 timestamp with millisecond precision, derived by firmware from the current Brain-authoritative time synchronization anchor. This does not replace Brain monotonic receive-age freshness.",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+    },
+    "boot_id": {
+      "type": "string",
+      "description": "Fresh 128-bit identifier generated once for each MCU boot.",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "sync_id": {
+      "type": "string",
+      "description": "Fresh 128-bit Brain-generated identifier for the current serial synchronization session.",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "status_sequence": {
+      "type": "integer",
+      "description": "Strictly increasing status sequence within the current boot and synchronization session, beginning at zero.",
+      "minimum": 0,
+      "maximum": 9223372036854775807
     },
     "mode": {
       "type": "string",
@@ -90,5 +110,6 @@
       "minimum": 0,
       "description": "Optional: Total HID actions executed since boot"
     }
-  }
+  },
+  "additionalProperties": false
 }
