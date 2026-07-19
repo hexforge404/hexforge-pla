@@ -79,16 +79,17 @@ def build_app(cfg: BrainConfig) -> FastAPI:
 
     @app.get("/status")
     def get_status():
+        device_status = executor.read_status()
         return {
             "mode": modes.current,
             "armed": executor._armed,  # simple surface for now
-            "physical_ok": executor._physical_ok,
+            "physical_ok": executor.physical_safe,
             "lab_mode": cfg.lab_mode,
             "last_proposal": state["last_proposal"],
             "last_decision": state["last_decision"],
             "last_execute": state["last_execute"],
             "last_ack": state["last_ack"],
-            "device_status": executor.read_status(),
+            "device_status": device_status,
         }
 
     @app.post("/mode")
@@ -138,9 +139,14 @@ def build_app(cfg: BrainConfig) -> FastAPI:
 
     @app.post("/arm")
     def arm(body: Dict[str, Any], _: None = Depends(require_auth)):
-        enable = bool(body.get("enabled", False))
-        physical_ok = bool(body.get("physical_ok", False)) or not cfg.require_physical_arm
-        executor.arm(enable, physical_ok=physical_ok)
+        enable = body.get("enabled", False)
+        if type(enable) is not bool:
+            raise HTTPException(status_code=400, detail="enabled must be a boolean")
+        try:
+            executor.arm(enable)
+        except PermissionError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        physical_ok = executor.physical_safe
         logger.log(
             event_type="MODE_CHANGE",
             mode=modes.current,
@@ -179,7 +185,7 @@ def build_app(cfg: BrainConfig) -> FastAPI:
                 raise HTTPException(status_code=403, detail="not in execute mode")
             if not executor._armed:
                 raise HTTPException(status_code=403, detail="executor not armed")
-            if cfg.require_physical_arm and not executor._physical_ok:
+            if cfg.require_physical_arm and not executor.physical_safe:
                 raise HTTPException(status_code=403, detail="physical arm not confirmed")
             prop_payload = state["last_proposal"]["payload"]
             action_type = prop_payload.get("type", "TYPE_TEXT")
