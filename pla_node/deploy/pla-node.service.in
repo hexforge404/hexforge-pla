@@ -7,17 +7,17 @@ Wants=network-online.target
 Type=simple
 User=pla
 Group=pla
-WorkingDirectory=/home/pla/hexforge-pla/pla_node
+WorkingDirectory=@PLA_DEPLOY_ROOT@/pla_node
 EnvironmentFile=/etc/pla/pla.env
 Environment=PLA_NODE_HOST=0.0.0.0
 Environment=PLA_NODE_PORT=8787
-ExecStart=/home/pla/hexforge-pla/pla_node/.venv/bin/uvicorn app.main:app --host ${PLA_NODE_HOST} --port ${PLA_NODE_PORT} --workers 1 --proxy-headers --forwarded-allow-ips=* --log-level info
+ExecStart=@PLA_DEPLOY_ROOT@/pla_node/.venv/bin/uvicorn app.main:app --host ${PLA_NODE_HOST} --port ${PLA_NODE_PORT} --workers 1 --proxy-headers --forwarded-allow-ips=* --log-level info
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ReadWritePaths=/home/pla/hexforge-pla/pla_node/logs /home/pla/hexforge-pla/pla_node/spool
+ReadWritePaths=@PLA_DEPLOY_ROOT@/pla_node/logs @PLA_DEPLOY_ROOT@/pla_node/spool
 
 [Install]
 WantedBy=multi-user.target

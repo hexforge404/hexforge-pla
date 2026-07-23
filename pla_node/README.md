@@ -40,15 +40,22 @@ sudo mkdir -p /etc/pla_node
 sudo cp config/pla.env.example /etc/pla_node/pla.env
 sudo nano /etc/pla_node/pla.env  # set PLA_API_KEY
 ```
-2) Copy service unit:
+2) Render service units for an explicit installed deployment root:
 ```bash
-sudo cp deploy/pla-node.service /etc/systemd/system/pla-node.service
-sudo systemctl daemon-reload
-sudo systemctl enable pla-node
-sudo systemctl start pla-node
-sudo systemctl status pla-node
+mkdir ./rendered-units
+PLA_DEPLOY_ROOT=/absolute/path/to/installed/hexforge-pla \
+  ../deploy/systemd/render_units.sh --output-dir ./rendered-units
+systemd-analyze verify ./rendered-units/pla-node.service \
+  ./rendered-units/brain-receiver.service
 ```
-Service runs from `/home/pla/hexforge-pla/pla_node` by default; adjust `WorkingDirectory` if you install elsewhere.
+`/absolute/path/to/installed/hexforge-pla` is a syntax illustration, not a
+literal default. `PLA_DEPLOY_ROOT` is required at render time and has no
+default. It must name an installed release tree, never a source/development
+clone. The historical deployment path and the HF-P0-002 development clone are
+prohibited. The caller-provided output directory must already exist and be
+empty. Rendering and static verification do not install, enable, reload, or
+start either service. Credential provisioning in `/etc/pla_node/pla.env`
+remains separate from deployment-root selection.
 
 Verify at runtime:
 ```bash

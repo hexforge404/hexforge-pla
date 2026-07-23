@@ -6,15 +6,15 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=pla
-WorkingDirectory=/home/pla/hexforge-pla/software/brain_receiver
-ExecStart=/home/pla/hexforge-pla/software/brain_receiver/.venv/bin/gunicorn --workers 2 --bind 0.0.0.0:${BRAIN_RECEIVER_PORT} app:app
+WorkingDirectory=@PLA_DEPLOY_ROOT@/software/brain_receiver
+ExecStart=@PLA_DEPLOY_ROOT@/software/brain_receiver/.venv/bin/gunicorn --workers 2 --bind 0.0.0.0:${BRAIN_RECEIVER_PORT} app:app
 Restart=always
 RestartSec=2
 Environment=BRAIN_RECEIVER_PORT=8788
 NoNewPrivileges=true
 ProtectSystem=strict
 PrivateTmp=true
-ReadWritePaths=/home/pla/hexforge-pla/logs
+ReadWritePaths=@PLA_DEPLOY_ROOT@/logs
 
 [Install]
 WantedBy=multi-user.target
